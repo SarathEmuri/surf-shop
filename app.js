@@ -40,7 +40,9 @@ app.use(session({
   secret: 'first git project',
   resave: false,
   saveUninitialized: true
-}))
+}));
+app.use(passport.initialize());
+app.use(passport.session());
 
 // CHANGE: USE "createStrategy" INSTEAD OF "authenticate"
 passport.use(User.createStrategy());
