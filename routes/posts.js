@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { asyncErrorHandler } = require('../middleware');
-const { postIndex, postNew, postCreate, postShow, postEdit, postUpdate } = require('../controllers/posts');
+const { postIndex, postNew, postCreate, postShow, postEdit, postUpdate, postDestroy } = require('../controllers/posts');
 
 /* GET posts index /posts */
 router.get('/', asyncErrorHandler(postIndex));
@@ -22,8 +22,6 @@ router.get('/:id/edit', asyncErrorHandler(postEdit));
 router.put('/:id', asyncErrorHandler(postUpdate));
 
 /* DELETE posts destroy /posts/:id */
-router.delete('/:id', (req, res, next) => {
-    res.send('DESTROY /posts/:id');
-  });
-  
-  module.exports = router;
+router.delete('/:id', asyncErrorHandler(postDestroy));
+
+module.exports = router;
