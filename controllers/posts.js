@@ -43,12 +43,54 @@ module.exports = {
     },
     // Posts Update
     async postUpdate(req, res, next) {
-        let post = await Post.findByIdAndUpdate(req.params.id, req.body.post, { new: true});
+        // find the post by Id
+        let post = await Post.findById(req.params.id);
+        // check if  there is any image for deletion
+        if(req.body.deleteImages && req.body.deleteImages.length) {
+            // assign deleteImages from req.body to its own variable
+            let deleteImages = req.body.deleteImages;
+            //loop over deleteImages
+            for(const public_id of deleteImages) {
+                // delete images from cloudinary
+                await cloudinay.v2.uploader.destroy(public_id);
+                // delete images from post.images
+                for(const image of post.images) {
+                    if(image.public_id === public_id) {
+                        let index = post.images.indexOf(image);
+                        post.images.splice(index, 1);
+                    }
+                }
+            }
+        }
+        // check if there are new images for upload
+        if(req.files) {
+            // upload images
+            for (const file of req.files) {
+                let image = await cloudinay.v2.uploader.upload(file.path);
+                // add images to post.images array
+                post.images.push({
+                    url: image.secure_url,
+                    public_id: image.public_id
+                });
+            }
+        }
+        // update the post with any new property
+        post.title = req.body.post.title;
+        post.description = req.body.post.description;
+        post.price = req.body.post.price;
+        post.location = req.body.post.location;
+        // save the uploaded post into the DB
+        post.save();
+        // redirect to show page
         res.redirect(`/posts/${post.id}`);
     },
     // Posts Destroy
     async postDestroy(req, res, next) {
-        await Post.findByIdAndRemove(req.params.id);
+        let post = await Post.findById(req.params.id);
+        for(const image of post.images) {
+            await cloudinay.v2.uploader.destroy(image.public_id);
+        }
+        await post.remove();
         res.redirect('/posts');
     }
 }
