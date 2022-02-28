@@ -76,7 +76,7 @@ app.use(function(req, res, next) {
 // Mount routes
 app.use('/', indexRouter);
 app.use('/posts', postsRouter);
-app.use('/posts/:id/reviews', postsRouter);
+app.use('/posts/:id/reviews', reviewsRouter);
 // app.use('/users', usersRouter);
 
 // catch 404 and forward to error handler

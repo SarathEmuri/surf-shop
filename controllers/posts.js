@@ -2,8 +2,8 @@ const { get } = require('express/lib/response');
 const Post = require('../models/post');
 const mbxGeocoding = require('@mapbox/mapbox-sdk/services/geocoding');
 const geocodingClient = mbxGeocoding({ accessToken: process.env.MAPBOX_TOKEN });
-const cloudinay = require('cloudinary');
-cloudinay.config({
+const cloudinary = require('cloudinary');
+cloudinary.config({
     cloud_name: 'dpxv7g3rt',
     api_key: '136625436571561',
     api_secret: process.env.CLOUDINARY_SECRET
@@ -23,7 +23,7 @@ module.exports = {
     async postCreate(req, res, next) {
         req.body.post.images = [];
         for (const file of req.files) {
-            let image = await cloudinay.v2.uploader.upload(file.path);
+            let image = await cloudinary.v2.uploader.upload(file.path);
             req.body.post.images.push({
                 url: image.secure_url,
                 public_id: image.public_id
@@ -44,7 +44,10 @@ module.exports = {
     //Posts Show
     async postShow(req, res, next) {
         // throw new Error('This is an error');
-        let post = await Post.findById(req.params.id);
+        let post = await Post.findById(req.params.id).populate({
+            path: 'reviews',
+            options: { sort: { '_id': -1 } }
+        });
         res.render('posts/show', { post });
     },
     //Posts Edit
@@ -63,7 +66,7 @@ module.exports = {
             //loop over deleteImages
             for(const public_id of deleteImages) {
                 // delete images from cloudinary
-                await cloudinay.v2.uploader.destroy(public_id);
+                await cloudinary.v2.uploader.destroy(public_id);
                 // delete images from post.images
                 for(const image of post.images) {
                     if(image.public_id === public_id) {
@@ -77,7 +80,7 @@ module.exports = {
         if(req.files) {
             // upload images
             for (const file of req.files) {
-                let image = await cloudinay.v2.uploader.upload(file.path);
+                let image = await cloudinary.v2.uploader.upload(file.path);
                 // add images to post.images array
                 post.images.push({
                     url: image.secure_url,
@@ -109,7 +112,7 @@ module.exports = {
     async postDestroy(req, res, next) {
         let post = await Post.findById(req.params.id);
         for(const image of post.images) {
-            await cloudinay.v2.uploader.destroy(image.public_id);
+            await cloudinary.v2.uploader.destroy(image.public_id);
         }
         await post.remove();
         res.redirect('/posts');
